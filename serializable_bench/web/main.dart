@@ -18,6 +18,19 @@ class Simple extends _$SimpleSerializable {
 class Complex extends _$ComplexSerializable {
 	Simple simple;
 	List<Simple> list;
+
+	operator []=(Object key, value) {
+		switch (key) {
+			case 'simple':
+				simple = value == null || value is Simple ? value : (new Simple()..fromMap(value));
+				return;
+			case 'list':
+				list = value == null ? value : (value.map((v) => new Simple()..fromMap(v)).toList());
+				return;
+		}
+		super[key] = value;
+	}
+
 }
 
 void main() {
@@ -63,9 +76,9 @@ void main() {
 
 		for (int i=0; i<1000; i++) {
 			var complexMap = JSON.decode(data);
-			complexMap['simple'] = new Simple()..fromMap(complexMap['simple']);
-			complexMap['list'] = complexMap['list'].map((simpleMap) =>
-				new Simple()..fromMap(simpleMap)).toList();
+//			complexMap['simple'] = new Simple()..fromMap(complexMap['simple']);
+//			complexMap['list'] = complexMap['list'].map((simpleMap) =>
+//				new Simple()..fromMap(simpleMap)).toList();
 			new Complex()..fromMap(complexMap);
 		}
 

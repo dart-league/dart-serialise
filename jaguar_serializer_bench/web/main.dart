@@ -1,7 +1,7 @@
 library serialise.jaguar_serializer_bench;
 
 import 'dart:html';
-import 'package:jaguar_serializer/serializer.dart';
+import 'package:jaguar_serializer/jaguar_serializer.dart';
 
 part 'main.g.dart';
 
@@ -10,8 +10,7 @@ class SimpleJsonSerializer extends Serializer<Simple> with _$SimpleJsonSerialize
 	Simple createModel() => new Simple();
 }
 
-@GenSerializer()
-@ProvideSerializer(Simple, SimpleJsonSerializer)
+@GenSerializer(serializers: const [SimpleJsonSerializer])
 class ComplexJsonSerializer extends Serializer<Complex> with _$ComplexJsonSerializer {
 	Complex createModel() => new Complex();
 }

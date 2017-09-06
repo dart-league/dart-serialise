@@ -1,5 +1,4 @@
-Object serialisation in Dart
-============================
+# Object serialisation in Dart
 
 I have been using [Dart](https://www.dartlang.org/) for a few years now, specifically to produce a complex front-end for our machine vision framework. A recurring theme 
 with browser-based applications is the use of JSON to communicate with server-side daemons and the "dart:convert" core package provides reliable 
@@ -12,9 +11,7 @@ early on and produced [model_map](http://pub.dartlang.org/packages/model_map), b
 As far as I can tell, the only viable options today are reflection/transformer based solutions and manual serialisation code. I would like to 
 propose a third possibility based on the recent javascript interop capabilities of the [js package](https://pub.dartlang.org/packages/js).
 
----
-Manual
-------
+## Manual
 
 This method involves writing functions that convert your entity to/from maps which can then be serialised using the core "dart:convert" 
 library. If your application contains many complex entities, this means writing an awful lot of boilerplate code and introduces many places 
@@ -29,7 +26,7 @@ class Simple
     double value;
     bool flag;
 
-    static Simple deserialise(dynamic m)
+    static Simple deserialize(dynamic m)
     {
         return m == null ? null : new Simple()
             ..id    = m['id']
@@ -38,7 +35,7 @@ class Simple
         ;
     }
 
-    Map serialise()
+    Map serialize()
     {
         return {
             'id': id,
@@ -59,9 +56,7 @@ var simple = Simple.deserialise(JSON.decode(data));
 JSON.encode(simple.serialise());
 ```
 
----
-Reflection and Transformers
----------------------------
+# Reflection and Transformers
 
 An alternative is to use a library that has different behaviours depending on whether you are running in a Dart VM or compiled javascript.
 
@@ -86,7 +81,7 @@ class Simple extends _$SimpleSerializable
 which can be encoded and decoded from JSON as follows
 
 ```dart
-// Deserialise
+// Deserialize
 var simple = fromJson(data, Simple);
 
 // Serialise
@@ -156,9 +151,7 @@ Due to the limitations of interop, fields can not be used and getter/setter func
 This results in more boilerplate than the reflection method, but still less than the manual method and with a reduced 
 chance of introducing errors.
 
----
-Comparison
-----------
+## Comparison
 
 The following comparisons of size and speed were produced using the code in this repository and Dart v1.22.1, DSON v0.5.0+2,
 js v0.6.1, Dartium 45.0.2454.104 and Chrome 57.0.2987.110.
@@ -167,34 +160,29 @@ The full results can be found in the [results](results/results.ods) spreadsheet.
 iterations of serialisation and 1000 iterations of deserialisation of a non-trivial entity. The numbers shown here are averages
 and ignore the first half-dozen runs. 
 
-| Method  | Size (js) | Serialise (dart) | Deserialise (dart) | Serialise (js) | Deserialise (js) |
-| ------- | --------- | ---------------- | ------------------ | -------------- | ---------------- |
-| Manual  | 39.4 KB   | 4.8 µs           | 3.1 µs             | 10.7 µs        | 7.9 µs           |
-| DSON    | 61.3 KB   | 27.8 µs          | 35.2 µs            | 43.0 µs        | 40.0 µs          |
-| Interop | 33.4 KB   | 105.7 µs         | 27.9 µs            | 3.4 µs         | 3.1 µs           |
+| Method        | Size (js) | Serialize (dart) | Deserialize (dart) | Serialize (js) | Deserialize (js) |
+| ------------- | --------- | ---------------- | ------------------ | -------------- | ---------------- |
+| Manual        | 39.4 KB   | 8.29 ms          | 5.78 ms            | 10.7 ms        | 7.9 ms           |
+| DSON          | 64 KB     | 15.9 ms          | 9.6 ms             | 27.78 ms       | 19.99 ms         |
+| Interop       | 33.4 KB   | 61.55 ms         | 14.96 ms           | 2.49 ms        | 2.93 ms          |
+| Serializable  | 54 KB     | 6.1 ms           | 6.92 ms            | 4.37 ms        | 8.38 ms          |
+| Dartson       | 86 KB     | 9.61 ms          | 6.81 ms            | 8.58 ms        | 7.01 ms          |
+| Jaguar_serializer | 88 KB | 8.57 ms          | 6.58 ms            | 10.31 ms       | 8.59 ms          |
+| Jackson (Groovy) |        | 496 ms           | 252 ms             | n/a            | n/a              |
 
-The manual method was the fastest when running in the DartVM, but the interop method is clearly the
-winner when compiled to javascript. The interop method also resulted in the smallest javascript file size.
 
----
-Conclusions
------------
+## Conclusions
 
-We have already started using the interop method in our applications since it is more efficient and less prone to error
-than the manual method, and whilst not as terse as the DSON method it is faster overall.
+The interop method is clearly the winner when compiled to javascript. Also resulted in
+ the smallest javascript file size. However the this method doesn't work if we want to use it in a
+ server-side DartVM or Flutter app.
 
-If you do not care about creating or modifying an entity such as a read-only entity that is only ever deserialised in the front-end
-then you can drop the setters and factory:
+Even though the other methods (Manual, Serializable, Dartson and Jaguar_serializer) has pretty similar speeds and
+are faster than DSON, this one has more flexibility for converting values. For example DSON is able to convert values
+that contains cyclical references. Also it is able to exclude certain properties and setting the depth of parsing by
+passing certain parameters int the `toJson/fromJson` methods. Furthermore you can see that the speed is still much
+smaller that Jackson Serializer (Java/Groovy Library).
 
-```dart
-@JS()
-@anonymous
-class Simple
-{
-    external String get id;
-    external double get value;
-    external bool get flag;
-}
-```
-
-Something to be aware of is that items that do not exist in the JSON will result in ```null``` values in the entity.
+In my opinion I prefer to sacrifice some speed and gain flexibility. That's why I prefer to use DSON over the other
+libraries. However that's just me, and my opinion could be completely biased since I'm the creator and maintainer of
+DSON and Serializable.

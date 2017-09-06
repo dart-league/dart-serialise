@@ -1,6 +1,8 @@
 @JS()
 library serialise.interop;
 
+import 'dart:html';
+
 import 'package:js/js.dart';
 
 
@@ -51,6 +53,8 @@ class Complex
 
 void main()
 {
+	var output = document.querySelector('#output');
+
 	String data = '''{
 		"simple": {
 			"id": "something",
@@ -64,6 +68,8 @@ void main()
 		]
 	}''';
 
+	int serializeTimeTotal = 0;
+	int deserializeTimeTotal = 0;
 
 	for (int j=0; j<50; j++)
 	{
@@ -85,7 +91,8 @@ void main()
 
 		s.stop();
 
-		int forward = s.elapsedMicroseconds;
+		var serializeTime = s.elapsedMicroseconds;
+		serializeTimeTotal += serializeTime;
 
 		s..reset()..start();
 
@@ -96,6 +103,11 @@ void main()
 
 		s.stop();
 
-		print("$forward\t${s.elapsedMicroseconds}");
+		var deserializeTime = s.elapsedMicroseconds;
+		deserializeTimeTotal += deserializeTime;
+
+		output.appendHtml("<tr><td>$serializeTime</td><td>${deserializeTime}</td>");
 	}
+
+	document.querySelector('#output-table').appendHtml("<tfoot><tr><th>${serializeTimeTotal/50}</th><th>${deserializeTimeTotal/50}</th></tr></tfoot>");
 }
