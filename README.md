@@ -26,23 +26,17 @@ class Simple
     double value;
     bool flag;
 
-    static Simple deserialize(dynamic m)
-    {
-        return m == null ? null : new Simple()
+    static Simple deserialize(dynamic m) =>
+        m == null ? null : new Simple()
             ..id    = m['id']
             ..value = m['value']?.toDouble() ?? 0.0
-            ..flag  = m['flag'] ?? false
-        ;
-    }
+            ..flag  = m['flag'] ?? false;
 
-    Map serialize()
-    {
-        return {
-            'id': id,
-            'value': value,
-            'flag': flag
-        };
-    }
+    Map serialize() => {
+        'id': id,
+        'value': value,
+        'flag': flag
+    };
 }
 ```
 
@@ -58,20 +52,44 @@ JSON.encode(simple.serialise());
 
 # Reflection and Transformers
 
-An alternative is to use a library that has different behaviours depending on whether you are running in a Dart VM or compiled javascript.
+Another alternative is to use a library that has different behaviours depending on whether you are running in a Dart 
+VM or compiled javascript.
 
-If running in a Dart VM (either command-line or Dartium) then it uses reflection to serialise the class fields. When compiled to javascript 
-a transformer is used to generate serialisation/deserialisation code without the need for runtime reflection.
+If running in a Dart VM (only command-line not Dartium) then it uses reflection to serialise the class fields. When
+compiled to javascript or runs on Dartium a transformer is used to generate serialisation/deserialisation 
+code without the need for runtime reflection. The example provided here is based on the [Dartson package](https://pub.dartlang.org/packages/dartson). This method results in the least amount of boilerplate and is quite an elegant solution considering that object serialisation is not supported natively within Dart.
 
-The example provided here is based on the [DSON package](https://pub.dartlang.org/packages/dson). This method results in the least amount of 
-boilerplate and is quite an elegant solution considering that object serialisation is not supported natively within Dart.
+```dart
+@Entity()
+class Simple {
+    String id;
+    double value;
+    bool flag;
+}
+```
+
+which can be encoded and decoded from JSON as follows
+
+```dart
+var serializer = new Dartson.JSON();
+
+// Deserialize
+var simple = serializer.decode(data, new Simple());
+
+// Serialise
+serializer.encode(simple);
+```
+
+# Generators
+
+Another alternative is to use a library that uses code generators. The example provided here is based on 
+the [DSON package](https://pub.dartlang.org/packages/dson).
 
 ```dart
 part 'simple.g.dart';
 
 @serializable
-class Simple extends _$SimpleSerializable
-{
+class Simple extends _$SimpleSerializable {
     String id;
     double value;
     bool flag;
@@ -162,19 +180,20 @@ and ignore the first half-dozen runs.
 
 | Method        | Size (js) | Serialize (dart) | Deserialize (dart) | Serialize (js) | Deserialize (js) |
 | ------------- | --------- | ---------------- | ------------------ | -------------- | ---------------- |
-| Manual        | 39.4 KB   | 8.29 ms          | 5.78 ms            | 10.7 ms        | 7.9 ms           |
-| DSON          | 64 KB     | 15.9 ms          | 9.6 ms             | 27.78 ms       | 19.99 ms         |
-| Interop       | 33.4 KB   | 61.55 ms         | 14.96 ms           | 2.49 ms        | 2.93 ms          |
-| Serializable  | 54 KB     | 6.1 ms           | 6.92 ms            | 4.37 ms        | 8.38 ms          |
+| Manual        | 86 KB     | 8.29 ms          | 5.78 ms            | 10.7 ms        | 7.9 ms           |
+| DSON          | 94 KB     | 12.72 ms         | 11.15 ms           | 16.64 ms       | 17.94 ms         |
+| Interop       | 70 KB     | 61.55 ms         | 14.96 ms           | 2.49 ms        | 2.93 ms          |
+| Serializable  | 79 KB     | 6.1 ms           | 6.92 ms            | 4.37 ms        | 8.38 ms          |
 | Dartson       | 86 KB     | 9.61 ms          | 6.81 ms            | 8.58 ms        | 7.01 ms          |
 | Jaguar_serializer | 88 KB | 8.57 ms          | 6.58 ms            | 10.31 ms       | 8.59 ms          |
+| json_serializable | 80 KB | 9.09 ms          | 6.61 ms            | 8.23 ms        | 8.12 ms          |
 | Jackson (Groovy) |        | 496 ms           | 252 ms             | n/a            | n/a              |
 
 
 ## Conclusions
 
 The interop method is clearly the winner when compiled to javascript. Also resulted in
- the smallest javascript file size. However the this method doesn't work if we want to use it in a
+ the smallest javascript file size. However this method does not work if we want to use it in a
  server-side DartVM or Flutter app.
 
 Even though the other methods (Manual, Serializable, Dartson and Jaguar_serializer) has pretty similar speeds and

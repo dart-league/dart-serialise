@@ -1,8 +1,8 @@
 import 'package:build_runner/build_runner.dart';
-import 'package:dson/phase.dart';
+import 'package:dson/action.dart';
 
 
 main() async {
-  await build([dsonPhase(const ['web/dson.dart', 'web/dson_bench.dart'])],
+  await build([dsonAction(const ['web/*.dart'])],
       deleteFilesByDefault: true);
 }

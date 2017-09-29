@@ -4,7 +4,6 @@ part of serialise.serializable_bench;
 
 // **************************************************************************
 // Generator: SerializableGenerator
-// Target: class Simple
 // **************************************************************************
 
 abstract class _$SimpleSerializable extends SerializableMap {
@@ -44,11 +43,6 @@ abstract class _$SimpleSerializable extends SerializableMap {
 
   Iterable<String> get keys => const ['id', 'value', 'flag'];
 }
-
-// **************************************************************************
-// Generator: SerializableGenerator
-// Target: class Complex
-// **************************************************************************
 
 abstract class _$ComplexSerializable extends SerializableMap {
   Simple get simple;

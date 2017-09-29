@@ -3,7 +3,7 @@ library serialise.dson_bench;
 import 'package:dson/dson.dart';
 import 'dart:html';
 
-part 'dson_bench.g.dart';
+part 'main.g.dart';
 
 @serializable
 class Simple extends _$SimpleSerializable {
